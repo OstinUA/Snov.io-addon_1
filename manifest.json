@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Snov.io addon_1",
+  "version": "1.0.5",
+  "description": "Delivery Status Notification (Failure) | adWMG / by Ostin",
+  "permissions": [], 
+  "host_permissions": [
+    "https://app.snov.io/*"
+  ],
+  "icons": {
+      "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [ "emails.txt" ],
+      "matches": [ "https://app.snov.io/*" ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [ "https://app.snov.io/*" ],
+      "js": [ "content.js" ],
+      "run_at": "document_end"
+    }
+  ]
+}
