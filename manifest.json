@@ -12,7 +12,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": [ "emails.txt" ],
+      "resources": [ "email_fail.txt", "email_true.txt" ],
       "matches": [ "https://app.snov.io/*" ]
     }
   ],
