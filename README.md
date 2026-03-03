@@ -20,7 +20,7 @@ When managing large outreach campaigns, identifying previously failed or problem
 * **Real-time DOM Monitoring**: Utilizes `MutationObserver` to detect email addresses even on dynamic, single-page application (SPA) loads within Snov.io.
 * **High-Performance Matching**: Uses efficient data structures to handle large blocklists with minimal UI latency.
 * **Visual Alerts**: Automatically applies high-contrast styling (Red background, Bold text) to flagged emails.
-* **Local Data Control**: The blocklist is managed via a local `emails.txt` file, ensuring data privacy and easy updates without requiring a backend server.
+* **Local Data Control**: The blocklist is managed via a local `email_fail.txt` and `email_true.txt` files, ensuring data privacy and easy updates without requiring a backend server.
 
 ## Technical Details
 
@@ -37,9 +37,9 @@ Since this tool utilizes a local blocklist file, it is installed via Chrome Deve
     git clone [https://github.com/OstinUA/Snov.io-addon_1.git](https://github.com/OstinUA/Snov.io-addon_1.git)
     ```
 2.  **Configure Blocklist**:
-    * Open the `emails.txt` file in the root directory.
-    * Paste the list of emails you wish to flag (one email per line).
-    * Save the file.
+    * Open the `email_fail.txt` file in the root directory and add failed emails (one email per line).
+    * Open `email_true.txt` and add emails that already replied (one email per line).
+    * Save both files.
 3.  **Load into Chrome**:
     * Navigate to `chrome://extensions/`.
     * Enable **Developer mode** (top right toggle).
