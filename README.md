@@ -11,6 +11,15 @@ A zero-backend, runtime email-status highlighting library for Snov.io workflows 
 > [!NOTE]
 > This project is packaged as a Chrome Extension content script, but the core runtime behavior is intentionally library-like: load two datasets, normalize input, and apply deterministic rule-based highlighting.
 
+## Related Projects
+
+This tool is part of the **AdTech Automation Suite**. Check out the companion extension:
+
+| Project | Type | Description |
+| :--- | :--- | :--- |
+| **[Snov.io Addon: Blocklist Highlighter](https://github.com/OstinUA/Snov.io-addon_1)** | Chrome Extension | Real-time visual flagging of blacklisted or bounced emails |
+| **[Snov.io Addon: Click-to-Compose](https://github.com/OstinUA/Snov.io-addon_2)** | Chrome Extension | Instantly converts static email text into clickable `mailto:` links |
+
 ## Table of Contents
 
 - [Features](#features)
