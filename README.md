@@ -1,25 +1,21 @@
-# Snov.io Addon: Status Highlighter
+# Snov.io Status Highlighter
 
-A zero-backend Chrome Extension logging-style status highlighter for Snov.io that classifies outreach emails from local datasets and renders deterministic visual markers in real time.
+A zero-backend, runtime email-status highlighting library for Snov.io workflows that marks replied and failed contacts directly in the UI with deterministic matching.
 
-[![Version](https://img.shields.io/badge/version-1.0.5-blue?style=for-the-badge)](https://github.com/OstinUA/Snov.io-addon_1)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/OstinUA/Snov.io-addon_1)
-[![Coverage](https://img.shields.io/badge/coverage-n%2Fa-lightgrey?style=for-the-badge)](https://github.com/OstinUA/Snov.io-addon_1)
+[![Version](https://img.shields.io/badge/version-1.0.5-blue?style=for-the-badge)](manifest.json)
+[![Manifest](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](manifest.json)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue?style=for-the-badge)](LICENSE)
+[![Build](https://img.shields.io/badge/build-static-brightgreen?style=for-the-badge)](#testing)
+[![Coverage](https://img.shields.io/badge/coverage-n%2Fa-lightgrey?style=for-the-badge)](#testing)
 
 > [!NOTE]
-> Although this repository is a browser extension, its behavior follows a lightweight logging-library pattern: local source ingestion, normalization, deterministic lookup, and event-driven rendering.
+> This project is packaged as a Chrome Extension content script, but the core runtime behavior is intentionally library-like: load two datasets, normalize input, and apply deterministic rule-based highlighting.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Tech Stack & Architecture](#tech-stack--architecture)
-  - [Core Stack](#core-stack)
-  - [Project Structure](#project-structure)
-  - [Key Design Decisions](#key-design-decisions)
 - [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
 - [Testing](#testing)
 - [Deployment](#deployment)
 - [Usage](#usage)
@@ -29,93 +25,88 @@ A zero-backend Chrome Extension logging-style status highlighter for Snov.io tha
 
 ## Features
 
-- Manifest V3 compliant extension architecture with scoped host permissions (`https://app.snov.io/*`).
-- Dual-source status ingestion using newline-delimited local files:
-  - `email_fail.txt` for failed/risky recipients.
-  - `email_true.txt` for replied recipients.
-- Fast in-memory classification using `Set` collections for constant-time average lookup.
-- Case-insensitive normalization pipeline (`trim().toLowerCase()`) to prevent case drift.
-- Mutation-driven runtime processing with debounce to support dynamic DOM updates.
-- Deterministic precedence model where reply status overrides fail status if duplicated.
-- Minimal operational footprint: no remote API, no backend runtime, no telemetry channel.
-- Safe runtime scoping via `web_accessible_resources` and host match restrictions.
+- Real-time status classification over live Snov.io DOM updates using `MutationObserver`.
+- Dual-source status ingestion via plain-text datasets:
+  - `email_fail.txt` for failed/deliverability-risk emails.
+  - `email_true.txt` for replied/positive-state emails.
+- O(1) membership checks by pre-loading both datasets into in-memory `Set` collections.
+- Stable normalization pipeline (`trim() + toLowerCase()`) to avoid false negatives caused by case or spacing variance.
+- Deterministic conflict precedence where reply status overrides fail status when an email appears in both sets.
+- No external API dependencies, no backend process, and no telemetry pipeline.
+- Scope isolation to `https://app.snov.io/*` through Chrome Manifest V3 host constraints.
+- Debounced mutation handling to reduce unnecessary DOM traversals under heavy UI re-rendering.
+- Idempotent marking using `data-colored="true"` to prevent repeated styling work.
+- Lightweight operational model suitable for high-volume outbound operations teams.
 
 > [!IMPORTANT]
-> Status files are treated as source-of-truth datasets. Keep one email per line and avoid extra delimiters to preserve predictable matching.
+> The extension only highlights email nodes matching the selector `.long-email-width` and only within Snov.io pages that satisfy the configured host permissions.
 
 ## Tech Stack & Architecture
 
 ### Core Stack
 
-- Language: Vanilla JavaScript (ES6)
-- Runtime Model: Chrome Extension (Manifest V3)
-- Browser APIs:
-  - `chrome.runtime.getURL` for local resource addressing
-  - `fetch` for loading local text datasets
-  - `MutationObserver` for dynamic page observation
-- Data Format: Plain text (`.txt`) lists, newline-delimited
+- Language: Vanilla JavaScript (ES6).
+- Runtime: Browser content script.
+- Packaging: Chrome Extension Manifest V3.
+- Data format: newline-delimited plaintext (`.txt`).
+- Browser APIs: `fetch`, `MutationObserver`, DOM query APIs, `chrome.runtime.getURL`.
 
 ### Project Structure
 
 ```text
 .
-├── content.js         # Core load/normalize/lookup/highlight pipeline
-├── manifest.json      # MV3 metadata, permissions, content script wiring
-├── email_fail.txt     # Failure/risk dataset (red highlight)
-├── email_true.txt     # Replied dataset (green highlight)
-├── emails.txt         # Supplemental email list (optional local data)
+├── content.js          # Runtime logic: load datasets, observe DOM, apply highlights
+├── manifest.json       # Extension metadata, match rules, resource exposure
+├── email_fail.txt      # Failed email dataset (one email per line)
+├── email_true.txt      # Replied email dataset (one email per line)
+├── emails.txt          # Additional local list (not used by runtime)
 ├── icons/
-│   └── icon128.png    # Extension icon asset
-├── README.md
-└── LICENSE
+│   └── icon128.png     # Extension icon
+├── LICENSE             # GNU GPL v2
+└── README.md           # Project documentation
 ```
 
 ### Key Design Decisions
 
-1. Local-only data ingestion
-   - Chosen to avoid network latency, API failures, and privacy concerns.
-   - Ensures predictable behavior in offline-constrained enterprise environments.
+- Dataset-driven architecture: status logic is data-configured rather than hardcoded.
+- Runtime normalization first: convert all loaded and observed addresses to canonical lowercase form.
+- Preload before observe: initialize both sets before activating mutation tracking to avoid transient mismatches.
+- Selector-scoped execution: only process candidate nodes that have not been marked before.
+- Debounced observer callback: absorb bursty DOM mutation streams without over-processing.
 
-2. Set-backed indexing
-   - Email lookups are performed against `Set` instances to reduce repeated scan overhead.
-   - Suitable for large outreach datasets compared with array `.includes()` loops.
-
-3. Debounced mutation handling
-   - Dynamic Snov.io UI changes are observed continuously.
-   - Debounce window limits excessive re-processing during rapid DOM churn.
-
-4. CSS inline rendering
-   - Visual style is applied directly on target nodes.
-   - Reduces dependency on external stylesheets and keeps extension packaging simple.
+### Logging/Highlighting Data Flow
 
 ```mermaid
 flowchart TD
-    A[Extension Loaded on app.snov.io] --> B[Resolve local file URLs]
+    A[content.js injected at document_end] --> B[Resolve txt resource URLs via chrome.runtime.getURL]
     B --> C[Fetch email_fail.txt]
     B --> D[Fetch email_true.txt]
-    C --> E[Normalize and build fail Set]
-    D --> F[Normalize and build true Set]
+    C --> E[Normalize lines and load fail Set]
+    D --> F[Normalize lines and load true Set]
     E --> G[Initialize MutationObserver]
     F --> G
-    G --> H[Scan .long-email-width elements]
+    G --> H[Scan unprocessed .long-email-width elements]
     H --> I{Email in true Set?}
-    I -- Yes --> J[Apply green badge styles]
+    I -- Yes --> J[Apply green style]
     I -- No --> K{Email in fail Set?}
-    K -- Yes --> L[Apply red badge styles]
+    K -- Yes --> L[Apply red style]
     K -- No --> M[No style mutation]
+    J --> N[Mark data-colored=true]
+    L --> N
+    M --> N
 ```
 
 > [!TIP]
-> If your outreach volume is high, periodically de-duplicate status files to keep load times and memory footprint lean.
+> If your status lists are large, keep one email per line and avoid duplicates; using `Set` already de-duplicates data at load time.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Chromium-based browser (Google Chrome recommended)
-- Access to `https://app.snov.io/*`
-- Git installed locally
-- Text editor for updating status datasets
+- Google Chrome (recommended latest stable).
+- Access to `https://app.snov.io/*`.
+- `git` installed locally.
+- Optional: Node.js 18+ if you want to run syntax checks via CLI.
 
 ### Installation
 
@@ -124,130 +115,129 @@ flowchart TD
 git clone https://github.com/OstinUA/Snov.io-addon_1.git
 cd Snov.io-addon_1
 
-# 2) Populate local status datasets (one email per line)
-# edit email_fail.txt
-# edit email_true.txt
+# 2) Populate datasets (one email per line)
+$EDITOR email_fail.txt
+$EDITOR email_true.txt
 
-# 3) Load unpacked extension
-# open chrome://extensions/
-# enable "Developer mode"
-# click "Load unpacked" and select this repository directory
+# 3) Load unpacked extension in Chrome
+# - Open chrome://extensions/
+# - Enable Developer mode
+# - Click "Load unpacked"
+# - Select this repository root
 ```
 
 > [!WARNING]
-> Reload the extension after modifying `email_fail.txt` or `email_true.txt`; active tabs do not automatically reload local assets.
+> Keep `email_fail.txt` and `email_true.txt` in repository root. Runtime loading depends on static paths resolved by `chrome.runtime.getURL(...)`.
 
 ## Testing
 
-This project has no formal automated unit/integration suite in the current repository state. Use the following validation workflow:
+Because this project is a static extension (no dedicated test framework yet), use the following validation workflow:
 
 ```bash
-# Static sanity checks
+# Syntax check content script
 node --check content.js
-python -m json.tool manifest.json > /tmp/manifest.pretty.json
 
-# Manual runtime verification
-# 1) Load extension in chrome://extensions/
-# 2) Open https://app.snov.io/
-# 3) Confirm replied emails render green
-# 4) Confirm failed emails render red
-# 5) Confirm duplicated emails prefer green (reply precedence)
+# Validate JSON manifest format
+python3 -m json.tool manifest.json > /dev/null
+
+# Optional: inspect tracked files and extension package readiness
+git status --short
 ```
 
+Recommended manual integration test:
+
+1. Add known addresses to both lists (`email_fail.txt`, `email_true.txt`).
+2. Reload extension in `chrome://extensions/`.
+3. Open Snov.io lead pages containing those addresses.
+4. Confirm replied emails render green, failed emails red.
+5. Confirm replied precedence when an address exists in both lists.
+
 > [!CAUTION]
-> `node --check` validates syntax only; it does not execute extension-specific browser APIs.
+> If Snov.io changes class names or DOM structure, selector `.long-email-width` may become stale and require an update in `content.js`.
 
 ## Deployment
 
-For production usage, deployment is extension distribution rather than service hosting.
+### Production Deployment Model
 
-### Build/Package for Distribution
+This repository is deployed as an unpacked extension (internal usage) or a packaged Chrome extension artifact.
+
+### Build/Package Steps
 
 ```bash
-# from repository root
-zip -r snov-status-highlighter-v1.0.5.zip . \
-  -x ".git/*" \
-  -x "*.DS_Store"
+# Optional clean package directory build
+rm -rf dist && mkdir -p dist/snov-status-highlighter
+cp -R content.js manifest.json email_fail.txt email_true.txt icons LICENSE README.md dist/snov-status-highlighter/
+
+# Create distributable zip
+cd dist && zip -r snov-status-highlighter.zip snov-status-highlighter
 ```
 
-### CI/CD Integration Recommendations
+### CI/CD Integration Suggestions
 
-- Add a CI job that validates:
-  - `manifest.json` JSON syntax
-  - JavaScript syntax (`node --check`)
-  - Presence of required resources (`content.js`, `email_fail.txt`, `email_true.txt`)
-- Optionally automate zip artifact generation on tagged releases.
-- Use semantic version bumps in `manifest.json` per release.
-
-### Enterprise Rollout Guidance
-
-- Distribute signed package through internal browser policy management.
-- Store approved status files in source control with reviewer gates.
-- Document operational update cadence for outreach operations teams.
+- Add a CI job to run `node --check content.js` and `python3 -m json.tool manifest.json`.
+- Add artifact packaging step to produce `snov-status-highlighter.zip`.
+- Gate release tags on successful syntax and manifest validation.
 
 ## Usage
 
-Use this extension as a local classification/rendering pipeline.
+Use this project as a deterministic status-highlighting runtime in Snov.io.
 
 ```js
-// content.js boot sequence summary
-const EMAIL_FAIL_FILE = chrome.runtime.getURL('email_fail.txt');
-const EMAIL_TRUE_FILE = chrome.runtime.getURL('email_true.txt');
+// content.js executes automatically as a content script on app.snov.io pages.
+// 1) It loads both datasets into Sets.
+// 2) It scans .long-email-width elements.
+// 3) It applies styles based on status precedence.
 
-// Load both datasets in parallel and index into Sets for fast lookup
-Promise.all([
-  loadEmailSet(EMAIL_FAIL_FILE, 'email_fail.txt'),
-  loadEmailSet(EMAIL_TRUE_FILE, 'email_true.txt')
-]).then(([loadedFailEmails, loadedTrueEmails]) => {
-  failEmails = loadedFailEmails;
-  trueEmails = loadedTrueEmails;
-  initObserver(); // Start initial scan + runtime mutation tracking
-});
+if (trueEmails.has(emailText)) {
+  // replied status has top priority
+  el.style.backgroundColor = '#7dff7d';
+} else if (failEmails.has(emailText)) {
+  // fail status applies when reply status is absent
+  el.style.backgroundColor = '#f65353';
+}
+
+// avoid reprocessing the same element repeatedly
+el.dataset.colored = 'true';
 ```
 
-```text
-Operational flow:
-1. Insert failed addresses into email_fail.txt
-2. Insert replied addresses into email_true.txt
-3. Reload extension in chrome://extensions/
-4. Refresh active Snov.io pages
-5. Verify visual status markers on target email cells
-```
+Operational workflow:
+
+1. Update `email_fail.txt` and `email_true.txt`.
+2. Reload the extension.
+3. Refresh Snov.io page.
+4. Verify UI highlights.
 
 ## Configuration
 
-### Dataset Files
+### Configuration Surface
 
-- `email_fail.txt`
-  - Purpose: failure/risk classification source.
-  - Format: one email per line.
-- `email_true.txt`
-  - Purpose: replied classification source.
-  - Format: one email per line.
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `host_permissions` | `string[]` | `https://app.snov.io/*` | Restricts where content script can execute. |
+| `content_scripts.matches` | `string[]` | `https://app.snov.io/*` | URL patterns for script injection. |
+| `content_scripts.run_at` | `string` | `document_end` | Injection lifecycle timing. |
+| `email_fail.txt` | file | empty | Newline-delimited fail-status email list. |
+| `email_true.txt` | file | empty | Newline-delimited reply-status email list. |
+| `.long-email-width` selector | CSS selector | hardcoded | Target email nodes for classification/styling. |
 
-### Runtime Matching Rules
+### Environment Variables
 
-- Normalization: `trim().toLowerCase()`
-- Empty lines: ignored
-- Duplicate lines: collapsed by `Set`
-- Precedence: `trueEmails` match is evaluated before `failEmails`
+No `.env` file or runtime environment variables are required.
 
-### Manifest Configuration
+### Startup Flags
 
-- `host_permissions`: limited to `https://app.snov.io/*`
-- `content_scripts.matches`: `https://app.snov.io/*`
-- `content_scripts.run_at`: `document_end`
-- `web_accessible_resources`: includes `email_fail.txt`, `email_true.txt`
+No CLI startup flags are required.
 
-### Environment Variables and Flags
+### Data File Contract
 
-- No `.env` file required.
-- No CLI startup flags required.
-- All behavior is controlled via `manifest.json` and local `.txt` datasets.
+- One email per line.
+- Empty lines are ignored.
+- Matching is case-insensitive.
+- Duplicate entries are collapsed by `Set` semantics.
 
 ## License
 
-This project is licensed under the GNU General Public License v2.0. See [LICENSE](LICENSE) for full terms.
+Distributed under the GNU General Public License v2.0. See `LICENSE` for full terms.
 
 ## Contacts & Community Support
 
