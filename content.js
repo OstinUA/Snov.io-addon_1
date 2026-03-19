@@ -5,6 +5,21 @@ const EMAIL_TRUE_FILE = chrome.runtime.getURL('email_true.txt');
 let failEmails = new Set();
 let trueEmails = new Set();
 
+/**
+ * Loads a newline-delimited email list into a normalized set.
+ *
+ * @param {string} fileUrl The extension-local URL of the text file to fetch.
+ * @param {string} label A human-readable label used in the success log message.
+ * @returns {Promise<Set<string>>} A promise that resolves to a set of trimmed,
+ * lowercase email addresses parsed from the fetched file.
+ * @throws {TypeError} Throws when the fetch request fails or the response body
+ * cannot be read as text.
+ *
+ * @example
+ * loadEmailSet(chrome.runtime.getURL('email_true.txt'), 'email_true.txt')
+ *   .then(emails => console.log(emails.has('user@example.com')));
+ * // Expected output: true or false depending on file contents
+ */
 function loadEmailSet(fileUrl, label) {
     return fetch(fileUrl)
         .then(r => r.text())
@@ -35,6 +50,20 @@ Promise.all([
     })
     .catch(err => console.error('Ошибка чтения email-файлов:', err));
 
+/**
+ * Applies visual highlighting to unprocessed email elements on the page.
+ *
+ * Matching addresses from `trueEmails` receive a green badge-style treatment,
+ * while matches from `failEmails` receive a red treatment. Every processed
+ * element is marked with `data-colored="true"` to avoid duplicate work on
+ * subsequent observer cycles.
+ *
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * highlightEmails();
+ * // Expected result: matching `.long-email-width` elements are styled in-place
+ */
 function highlightEmails() {
     const elements = document.querySelectorAll('.long-email-width:not([data-colored="true"])');
 
@@ -61,6 +90,19 @@ function highlightEmails() {
     });
 }
 
+/**
+ * Starts observing the document for newly rendered email elements.
+ *
+ * The observer performs an immediate highlight pass and then debounces future
+ * DOM mutation handling so repeated updates only trigger one refresh within a
+ * 500-millisecond window.
+ *
+ * @returns {void} This function does not return a value.
+ *
+ * @example
+ * initObserver();
+ * // Expected result: existing and newly added email elements are highlighted
+ */
 function initObserver() {
     highlightEmails();
 
