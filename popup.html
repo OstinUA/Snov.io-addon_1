@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --snov-purple: #8C54FF;
+      --snov-purple-hover: #7A4AE0;
+      --bg: #F4F5F9;
+      --surface: #FFFFFF;
+      --text-main: #333333;
+      --text-muted: #828B9E;
+      --border: #E0E4EC;
+    }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      width: 300px;
+      padding: 12px;
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text-main); 
+    }
+    
+    h3 { 
+      margin: 0 0 12px 0; 
+      font-size: 14px; 
+      font-weight: 600; 
+      text-align: center; 
+      color: var(--text-main);
+    }
+    
+    .row { 
+      display: flex; 
+      align-items: center; 
+      margin-bottom: 8px;
+      background: var(--surface); 
+      padding: 4px 8px; 
+      border-radius: 6px; 
+      border: 1px solid var(--border); 
+      transition: border-color 0.2s;
+    }
+
+    .row:focus-within {
+      border-color: var(--snov-purple);
+    }
+    
+    input[type="text"] { 
+      flex-grow: 1; 
+      margin-right: 8px; 
+      padding: 4px 0; 
+      border: none; 
+      font-size: 12px;
+      outline: none; 
+      background: transparent; 
+      color: var(--text-main);
+    }
+    
+    input[type="text"]::placeholder {
+      color: var(--text-muted);
+    }
+    
+    input[type="color"] { 
+      width: 22px; 
+      height: 22px; 
+      padding: 0; 
+      border: none; 
+      cursor: pointer; 
+      border-radius: 4px; 
+      background: transparent; 
+    }
+    
+    input[type="color"]::-webkit-color-swatch-wrapper { 
+      padding: 0; 
+    }
+    
+    input[type="color"]::-webkit-color-swatch { 
+      border: 1px solid rgba(0,0,0,0.1); 
+      border-radius: 3px; 
+    }
+    
+    .btn-group {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    button { 
+      width: 100%; 
+      padding: 8px; 
+      border: none; 
+      cursor: pointer; 
+      font-weight: 600; 
+      font-size: 12px;
+      border-radius: 6px; 
+      transition: all 0.2s ease; 
+    }
+    
+    button:active { 
+      transform: scale(0.98); 
+    }
+
+    .btn-save { 
+      background: var(--surface); 
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+    .btn-save:hover { 
+      background: #f8f9fa; 
+      border-color: #cdd3de;
+    }
+
+    .btn-update { 
+      background: var(--snov-purple); 
+      color: #ffffff;
+    }
+    .btn-update:hover { 
+      background: var(--snov-purple-hover); 
+    }
+    
+    .status { 
+      margin-top: 12px; 
+      text-align: center; 
+      font-size: 12px; 
+      font-weight: 500;
+      min-height: 15px; 
+    }
+    
+    .status-date { 
+      color: var(--text-muted); 
+      margin-top: 4px; 
+      text-align: center; 
+      font-size: 11px; 
+    }
+  </style>
+</head>
+<body>
+  <h3>Database Settings</h3>
+  
+  <div class="row">
+    <input type="text" id="url1" placeholder="CSV URL 1" autocomplete="off" spellcheck="false">
+    <input type="color" id="color1" value="#f65353">
+  </div>
+  <div class="row">
+    <input type="text" id="url2" placeholder="CSV URL 2" autocomplete="off" spellcheck="false">
+    <input type="color" id="color2" value="#ffeb3b">
+  </div>
+  <div class="row">
+    <input type="text" id="url3" placeholder="CSV URL 3" autocomplete="off" spellcheck="false">
+    <input type="color" id="color3" value="#7dff7d">
+  </div>
+  <div class="row">
+    <input type="text" id="url4" placeholder="CSV URL 4" autocomplete="off" spellcheck="false">
+    <input type="color" id="color4" value="#53a8f6">
+  </div>
+  
+  <div class="btn-group">
+    <button id="saveBtn" class="btn-save">Save Settings</button>
+    <button id="updateBtn" class="btn-update">Fetch / Update Databases</button>
+  </div>
+  
+  <div id="statusMessage" class="status"></div>
+  <div id="lastUpdate" class="status-date">No databases loaded</div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,45 +1,15 @@
-const EMAIL_FAIL_URL = 'YOUR_LINK_MUST_BE_IN_QUOTES';
-const EMAIL_TRUE_URL = 'YOUR_LINK_MUST_BE_IN_QUOTES';
+let listsData = [];
 
-let failEmails = new Set();
-let trueEmails = new Set();
+chrome.storage.local.get(['config'], (result) => {
+    const config = result.config;
+    
+    if (config) {
+        if (config.list1 && config.list1.emails) listsData.push({ emails: new Set(config.list1.emails), color: config.list1.color });
+        if (config.list2 && config.list2.emails) listsData.push({ emails: new Set(config.list2.emails), color: config.list2.color });
+        if (config.list3 && config.list3.emails) listsData.push({ emails: new Set(config.list3.emails), color: config.list3.color });
+        if (config.list4 && config.list4.emails) listsData.push({ emails: new Set(config.list4.emails), color: config.list4.color });
+    }
 
-function loadRemoteEmailSet(url, label) {
-    return new Promise((resolve) => {
-        if (!url || url.includes('ВАША_ССЫЛКА')) {
-            console.log(`Snov Colorizer: Пропущена загрузка ${label}, ссылка не указана.`);
-            resolve(new Set());
-            return;
-        }
-
-        chrome.runtime.sendMessage({ action: "fetchData", url: url }, response => {
-            if (!response || !response.success) {
-                console.error(`Snov Colorizer: Ошибка загрузки ${label}:`, response ? response.error : 'Неизвестная ошибка');
-                resolve(new Set());
-                return;
-            }
-
-            const result = new Set();
-            const lines = response.data.split(/[\n,\r]/);
-
-            for (let i = 0; i < lines.length; i++) {
-                const cleanEmail = lines[i].trim().toLowerCase();
-                if (cleanEmail && cleanEmail.includes('@')) {
-                    result.add(cleanEmail);
-                }
-            }
-            console.log(`Snov Colorizer: ${label} загружен - ${result.size} адресов.`);
-            resolve(result);
-        });
-    });
-}
-
-Promise.all([
-    loadRemoteEmailSet(EMAIL_FAIL_URL, 'Fail List'),
-    loadRemoteEmailSet(EMAIL_TRUE_URL, 'True List')
-]).then(([loadedFail, loadedTrue]) => {
-    failEmails = loadedFail;
-    trueEmails = loadedTrue;
     initObserver();
 });
 
@@ -49,20 +19,23 @@ function highlightEmails() {
 
     elements.forEach(el => {
         const emailText = el.textContent.trim().toLowerCase();
+        let matchedColor = null;
 
-        if (trueEmails.has(emailText)) {
-            el.style.backgroundColor = '#7dff7d';
-            el.style.color = '#000000';
-            el.style.fontWeight = 'bold';
-            el.style.padding = '2px 5px';
-            el.style.borderRadius = '4px';
-        } else if (failEmails.has(emailText)) {
-            el.style.backgroundColor = '#f65353';
+        for (let i = 0; i < listsData.length; i++) {
+            if (listsData[i].emails && listsData[i].emails.has(emailText)) {
+                matchedColor = listsData[i].color;
+                break; 
+            }
+        }
+
+        if (matchedColor) {
+            el.style.backgroundColor = matchedColor;
             el.style.color = '#000000';
             el.style.fontWeight = 'bold';
             el.style.padding = '2px 5px';
             el.style.borderRadius = '4px';
         }
+        
         el.dataset.colored = 'true';
     });
 }
