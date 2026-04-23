@@ -2,7 +2,7 @@
 
 A deterministic, zero-backend logging-and-annotation runtime for Snov.io that ingests remote email datasets and applies real-time, color-coded status signals directly in the UI.
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge)](manifest.json)
+[![Version](https://img.shields.io/badge/version-1.2.1-blue?style=for-the-badge)](manifest.json)
 [![Manifest](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](manifest.json)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue?style=for-the-badge)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-static-brightgreen?style=for-the-badge)](#6-testing)
@@ -10,6 +10,11 @@ A deterministic, zero-backend logging-and-annotation runtime for Snov.io that in
 
 > [!NOTE]
 > Although distributed as a Chrome Extension, the `content.js` execution model behaves like a lightweight in-page logging library: normalize input, classify entities, and apply deterministic output formatting.
+
+| Project | Type | Description |
+| :--- | :--- | :--- |
+| **[Snov.io Addon: Blocklist Highlighter](https://github.com/OstinUA/Snov.io-addon_1)** | Chrome Extension | Real-time visual flagging of blacklisted or bounced emails |
+| **[Snov.io Addon: Click-to-Compose](https://github.com/OstinUA/Snov.io-addon_2)** | Chrome Extension | Instantly converts static email text into clickable `mailto:` links |
 
 ## 2. Table of Contents
 
