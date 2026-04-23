@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Snov.io addon_1",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Highlighting from Google Sheets with custom colors",
   "permissions": [
     "storage"
