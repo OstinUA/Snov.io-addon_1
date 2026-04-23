@@ -7,7 +7,7 @@ A deterministic, zero-backend logging-and-annotation runtime for Snov.io that in
 [![Chrome Store](https://img.shields.io/badge/platform-Chrome_Extension-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/search/OstinUA)
 [![Chrome Portfolio](https://img.shields.io/badge/Chrome_Web_Store-Portfolio-34A853?style=for-the-badge&logo=google-chrome&logoColor=white)](https://ostinua.github.io/Chrome-Web-Store_Developer-List/)
 
-[![Version](https://img.shields.io/badge/version-1.2.1-blue?style=for-the-badge)](manifest.json)
+[![Version](https://img.shields.io/badge/version-1.2.3-blue?style=for-the-badge)](manifest.json)
 [![Manifest](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](manifest.json)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue?style=for-the-badge)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-static-brightgreen?style=for-the-badge)](#6-testing)

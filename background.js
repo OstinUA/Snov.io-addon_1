@@ -1,48 +1,83 @@
+const FETCH_TIMEOUT_MS = 10000;
+
+/**
+ * Fetches a remote URL and extracts email tokens.
+ * @param {string} url
+ * @returns {Promise<string[]>}
+ */
 function fetchParseCSV(url) {
     if (!url || !url.startsWith('http')) return Promise.resolve([]);
-    
-    return fetch(url)
-        .then(response => response.text())
-        .then(text => {
-            const lines = text.split(/[\n,\r]/);
-            const emails = [];
-            for (let i = 0; i < lines.length; i++) {
-                const clean = lines[i].trim().toLowerCase();
-                if (clean && clean.includes('@')) {
-                    emails.push(clean);
-                }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    return fetch(url, { signal: controller.signal })
+        .then(response => {
+            if (!response.ok) {
+                console.warn(`[snov-addon] HTTP ${response.status} for ${url}`);
+                return [];
             }
-            return emails;
+            return response.text().then(text => {
+                const emails = [];
+                const lines = text.split(/[\n,\r]/);
+                for (let i = 0; i < lines.length; i++) {
+                    const clean = lines[i].trim().toLowerCase();
+                    if (clean && clean.includes('@')) {
+                        emails.push(clean);
+                    }
+                }
+                return emails;
+            });
         })
         .catch(err => {
-            console.error(`Fetch error for ${url}:`, err);
+            if (err.name === 'AbortError') {
+                console.warn(`[snov-addon] Fetch timeout for ${url}`);
+            } else {
+                console.error(`[snov-addon] Fetch error for ${url}:`, err);
+            }
             return [];
-        });
+        })
+        .finally(() => clearTimeout(timer));
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "forceUpdate") {
+    if (request.action === 'forceUpdate') {
         chrome.storage.local.get(['config'], (result) => {
             const config = result.config || {};
-            
+
             Promise.all([
                 fetchParseCSV(config.list1?.url),
                 fetchParseCSV(config.list2?.url),
                 fetchParseCSV(config.list3?.url),
                 fetchParseCSV(config.list4?.url)
-            ]).then(([emails1, emails2, emails3, emails4]) => {
-                
-                config.list1 = { ...config.list1, emails: emails1 };
-                config.list2 = { ...config.list2, emails: emails2 };
-                config.list3 = { ...config.list3, emails: emails3 };
-                config.list4 = { ...config.list4, emails: emails4 };
+            ]).then(([e1, e2, e3, e4]) => {
+                config.list1 = { ...config.list1, emails: e1 };
+                config.list2 = { ...config.list2, emails: e2 };
+                config.list3 = { ...config.list3, emails: e3 };
+                config.list4 = { ...config.list4, emails: e4 };
                 config.lastUpdate = new Date().toLocaleString();
 
                 chrome.storage.local.set({ config }, () => {
-                    sendResponse({ success: true, timestamp: config.lastUpdate });
+                    // Notify all Snov.io tabs to reload their lists
+                    chrome.tabs.query({ url: 'https://app.snov.io/*' }, tabs => {
+                        tabs.forEach(tab => {
+                            chrome.tabs.sendMessage(tab.id, { action: 'reloadLists' })
+                                .catch(() => {}); // tab may not have content script yet
+                        });
+                    });
+
+                    try {
+                        sendResponse({ success: true, timestamp: config.lastUpdate });
+                    } catch (e) {
+                        // popup already closed — not an error
+                    }
                 });
+            }).catch(err => {
+                console.error('[snov-addon] forceUpdate failed:', err);
+                try { sendResponse({ success: false }); } catch (e) {}
             });
         });
-        return true;
+
+        return true; // keep message channel open
     }
 });
