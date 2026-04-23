@@ -2,7 +2,7 @@
 
 A zero-backend, runtime email-status highlighting library for Snov.io workflows that marks replied and failed contacts directly in the UI with deterministic matching.
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue?style=for-the-badge)](manifest.json)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge)](manifest.json)
 [![Manifest](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](manifest.json)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue?style=for-the-badge)](LICENSE)
 [![Build](https://img.shields.io/badge/build-static-brightgreen?style=for-the-badge)](#testing)
